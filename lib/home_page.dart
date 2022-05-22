@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:live_object_detection/main.dart';
+import 'package:tflite/tflite.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -16,12 +17,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    loadModel();
     if (cameras.isNotEmpty) {
       _controller = CameraController(cameras.first, ResolutionPreset.medium);
       _controller?.initialize().then((value) {
         if (mounted && cameras.isNotEmpty) {
           _controller?.startImageStream((image) {
             _cameraImage = image;
+            runModelOnStream();
             setState(() {});
           });
         }
@@ -56,4 +59,18 @@ class _HomePageState extends State<HomePage> {
       ),
     ));
   }
+
+  Future<void> loadModel() async {
+    Tflite.close();
+    try {
+      final response = await Tflite.loadModel(
+        model: "assets/yolov4_tiny.tflite",
+        labels: "assets/labels.txt",
+      );
+    } catch (e) {
+      debugPrint("Exception loading model " + e.toString());
+    }
+  }
+
+  Future<void> runModelOnStream() async {}
 }
